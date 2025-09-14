@@ -1,6 +1,12 @@
+# How To Run Project
 
+## Prerequisites
+Install Swag and Goose CLI tools:
+```bash
+go install github.com/swaggo/swag/cmd/swag@latest
+go install github.com/pressly/goose/v3/cmd/goose@latest
+```
 
-# Run Project
 First, start the required services using Docker Compose:
 ```bash
 docker compose up -d
