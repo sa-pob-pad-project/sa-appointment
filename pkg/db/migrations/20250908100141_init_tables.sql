@@ -21,36 +21,19 @@ CREATE TABLE doctor_shifts (
   CONSTRAINT shift_unique_per_day UNIQUE (doctor_id, weekday, start_time, end_time)
 );
 
-CREATE TABLE doctor_slots (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  doctor_id uuid NOT NULL,
-  start_time timestamptz NOT NULL,
-  end_time timestamptz NOT NULL,
-  status slot_status NOT NULL DEFAULT 'open',
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  deleted_at timestamptz,
-  CONSTRAINT slot_time_window CHECK (end_time > start_time)
-);
-
 
 CREATE TABLE appointments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  patient_id uuid NOT NULL,                
-  doctor_id uuid NOT NULL,                 
-  slot_id uuid UNIQUE,                     
+  patient_id uuid NOT NULL,
+  doctor_id uuid NOT NULL,
+  start_time timestamp NOT NULL,
+  end_time timestamp NOT NULL,
   status appointment_status NOT NULL DEFAULT 'scheduled',
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  deleted_at timestamptz,
-  CONSTRAINT unique_patient_doctor_slot UNIQUE (patient_id, doctor_id, slot_id)
+  deleted_at timestamptz
 );
 
-ALTER TABLE appointments
-  ADD CONSTRAINT fk_appointments_slot
-  FOREIGN KEY (slot_id) REFERENCES doctor_slots(id) ON DELETE SET NULL;
-
-CREATE INDEX idx_slots_doctor_time ON doctor_slots (doctor_id, start_time) WHERE deleted_at IS NULL;
 CREATE INDEX idx_appt_doctor_time ON appointments (doctor_id, created_at) WHERE deleted_at IS NULL;
 -- +goose StatementEnd
 

@@ -6,6 +6,7 @@ import (
 	_ "appointment-service/docs"
 	"appointment-service/pkg/handlers"
 	"appointment-service/pkg/jwt"
+	"appointment-service/pkg/middleware"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/swagger"
@@ -17,6 +18,10 @@ func SetupRoutes(app *fiber.App, appointmentHandler *handlers.AppointmentHandler
 	api.Get("/swagger/*", swagger.HandlerDefault)
 	appointment := api.Group("/appointment")
 	v1 := appointment.Group("/v1")
+
+	v1.Use(middleware.JwtMiddleware(jwtSvc))
+
+	v1.Get("/doctor/:doctor_id/slots", appointmentHandler.GetDoctorSlots)
 
 
 }
