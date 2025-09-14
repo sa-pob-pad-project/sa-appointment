@@ -86,7 +86,13 @@ goose version
 # goose: version 002
 ```
 
+## Contribution
+  1. นพณัช สาทิพย์พงษ์ besterOz
+  2. พงศธร รักงาน prukngan
+  3. ภวัต เลิศตระกูลชัย Phawat Loedtrakunchai
+  4. ธฤต จันทร์ดี tharitpr
 
-
+## System architecture
+  Microservice
 
 
