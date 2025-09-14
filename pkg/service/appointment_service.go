@@ -39,7 +39,6 @@ func (s *AppointmentService) GetDoctorSlots(doctorID string) (*dto.GetDoctorSlot
 	for i := 0; i < 30; i++ {
 		day := startDate.AddDate(0, 0, i)
 		weekDay := strings.ToLower(day.Weekday().String()[:3])
-		fmt.Println("Weekday", weekDay)
 		var shift *models.DoctorShift
 		for _, s := range *shifts {
 			if string(s.Weekday) == weekDay {
@@ -47,16 +46,12 @@ func (s *AppointmentService) GetDoctorSlots(doctorID string) (*dto.GetDoctorSlot
 			}
 		}
 
-		fmt.Println("Shift", shift)
 		if shift == nil {
 			continue
 		}
 
 		slotInterval := time.Duration(shift.DurationMin) * time.Minute // convert minutes to Duration
 		slots[day] = []dto.DoctorSlot{}
-		fmt.Println("Generating slots for", day, "with interval", slotInterval)
-		fmt.Println("Shift StartTime", shift.StartTime)
-		fmt.Println("Shift EndTime", shift.EndTime)
 
 		for t := shift.StartTime; t.Before(shift.EndTime); t = t.Add(slotInterval) {
 			slots[day] = append(slots[day], dto.DoctorSlot{
@@ -68,8 +63,6 @@ func (s *AppointmentService) GetDoctorSlots(doctorID string) (*dto.GetDoctorSlot
 		}
 	}
 
-	fmt.Println("DoctorID", doctorID)
-	fmt.Println("Shifts", shifts)
 	fmt.Println("Appointments", appointments)
 
 	return (*dto.GetDoctorSlotResponse)(&slots), nil

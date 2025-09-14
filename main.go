@@ -41,6 +41,7 @@ func main() {
 		Password: config.Get("DB_PASSWORD", "password"),
 		Dbname:   config.Get("DB_NAME", "postgres"),
 		Sslmode:  config.Get("DB_SSLMODE", "disable"),
+		
 	})
 	cmd.InitCmd()
 	appointmentRepository := repository.NewAppointmentRepository(db)

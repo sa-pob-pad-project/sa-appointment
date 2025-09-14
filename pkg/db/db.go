@@ -32,6 +32,10 @@ func Open(cfg Config) *gorm.DB {
 	con := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Dbname, cfg.Sslmode)
 	db, err := gorm.Open(postgres.Open(con), &gorm.Config{
 		Logger: newLogger,
+		NowFunc: func() time.Time {
+			ti, _ := time.LoadLocation("Asia/Bangkok")
+			return time.Now().In(ti)
+		},
 	})
 
 	if err != nil {
