@@ -46,3 +46,18 @@ func (r *AppointmentRepository) CreateDoctorShift(shift *models.DoctorShift) err
 	}
 	return nil
 }
+
+func (r *AppointmentRepository) GetDoctorShiftByID(shiftID string) (*models.DoctorShift, error) {
+	var shift models.DoctorShift
+	if err := r.db.Where("id = ? AND deleted_at IS NULL", shiftID).First(&shift).Error; err != nil {
+		return nil, err
+	}
+	return &shift, nil
+}
+
+func (r *AppointmentRepository) DeleteDoctorShift(shiftID string) error {
+	if err := r.db.Where("id = ?", shiftID).Delete(&models.DoctorShift{}).Error; err != nil {
+		return err
+	}
+	return nil
+}

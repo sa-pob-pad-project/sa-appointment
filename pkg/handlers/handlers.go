@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"appointment-service/pkg/context"
 	"appointment-service/pkg/dto"
 	"appointment-service/pkg/service"
 
@@ -40,8 +41,8 @@ func (h *AppointmentHandler) BookAppointment(c *fiber.Ctx) error {
 }
 
 func (h *AppointmentHandler) CreateDoctorShift(c *fiber.Ctx) error {
-	doctorID := c.Locals("userID").(string)
-	role := c.Locals("role").(string)
+	doctorID := context.GetUserId(c)
+	role := context.GetRole(c)
 	if role != "doctor" {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Only doctors can create shifts"})
 	}
@@ -53,4 +54,20 @@ func (h *AppointmentHandler) CreateDoctorShift(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "Doctor shift created successfully"})
+}
+
+func (h *AppointmentHandler) DeleteDoctorShift(c *fiber.Ctx) error {
+	doctorID := context.GetUserId(c)
+	role := context.GetRole(c)
+	if role != "doctor" {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Only doctors can delete shifts"})
+	}
+	var body dto.DeleteDoctorShiftRequest
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	if err := h.appointmentService.DeleteDoctorShift(doctorID, body.ShiftID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"message": "Doctor shift deleted successfully"})
 }

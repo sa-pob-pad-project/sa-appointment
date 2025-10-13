@@ -123,3 +123,14 @@ func (s *AppointmentService) CreateDoctorShift(doctorID string, shift *dto.Creat
 	}
 	return s.appointmentRepo.CreateDoctorShift(shiftModel)
 }
+
+func (s *AppointmentService) DeleteDoctorShift(doctorID, shiftID string) error {
+	shift, err := s.appointmentRepo.GetDoctorShiftByID(shiftID)
+	if err != nil {
+		return fmt.Errorf("shift not found")
+	}
+	if shift.DoctorID.String() != doctorID {
+		return fmt.Errorf("unauthorized")
+	}
+	return s.appointmentRepo.DeleteDoctorShift(shiftID)
+}
