@@ -21,3 +21,11 @@ func WithBody[T any]() fiber.Handler {
 		return c.Next()
 	}
 }
+
+func GetUserId(c *fiber.Ctx) string {
+	return c.Locals("userID").(string)
+}
+
+func GetRole(c *fiber.Ctx) string {
+	return c.Locals("role").(string)
+}

@@ -40,3 +40,9 @@ func (r *AppointmentRepository) CreateAppointment(appointment *models.Appointmen
 	return nil
 }
 
+func (r *AppointmentRepository) CreateDoctorShift(shift *models.DoctorShift) error {
+	if err := r.db.Create(shift).Error; err != nil {
+		return err
+	}
+	return nil
+}

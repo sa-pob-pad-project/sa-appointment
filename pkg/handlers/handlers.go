@@ -38,3 +38,19 @@ func (h *AppointmentHandler) BookAppointment(c *fiber.Ctx) error {
 	}
 	return c.JSON(resp)
 }
+
+func (h *AppointmentHandler) CreateDoctorShift(c *fiber.Ctx) error {
+	doctorID := c.Locals("userID").(string)
+	role := c.Locals("role").(string)
+	if role != "doctor" {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Only doctors can create shifts"})
+	}
+	var body dto.CreateDoctorShiftRequest
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	if err := h.appointmentService.CreateDoctorShift(doctorID, &body); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "Doctor shift created successfully"})
+}

@@ -109,3 +109,17 @@ func (s *AppointmentService) BookAppointment(patientID string, req *dto.BookAppo
 	}, nil
 
 }
+
+func (s *AppointmentService) CreateDoctorShift(doctorID string, shift *dto.CreateDoctorShiftRequest) error {
+	shiftModel := &models.DoctorShift{
+		ID:          utils.GenerateUUIDv7(),
+		DoctorID:    utils.StringToUUIDv7(doctorID),
+		Weekday:     models.DayOfWeek(strings.ToLower(shift.Weekday)),
+		StartTime:   shift.StartTime,
+		EndTime:     shift.EndTime,
+		DurationMin: shift.DurationMin,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	return s.appointmentRepo.CreateDoctorShift(shiftModel)
+}
