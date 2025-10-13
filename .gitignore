@@ -4,7 +4,7 @@
 *.so
 *.dylib
 *.test
-
+volume/
 # Output of the go coverage tool
 *.out
 

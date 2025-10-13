@@ -1,7 +1,6 @@
 package main
 
 import (
-	"appointment-service/cmd"
 	"appointment-service/pkg/config"
 	"appointment-service/pkg/db"
 	"appointment-service/pkg/handlers"
@@ -10,16 +9,37 @@ import (
 	"appointment-service/pkg/routes"
 	"appointment-service/pkg/service"
 	"bytes"
+	"database/sql"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"reflect"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/pressly/goose/v3"
 )
+
+//go:embed pkg/db/migrations/*.sql
+var migrationsFS embed.FS
+
+// migrateUp applies all up migrations using goose with embedded FS.
+// Set env MIGRATE_ON_START=true (default) to run on startup.
+func migrateUp(sqlDB *sql.DB) error {
+	goose.SetBaseFS(migrationsFS)
+	if err := goose.SetDialect("postgres"); err != nil {
+		return fmt.Errorf("goose set dialect: %w", err)
+	}
+	// directory path is relative to the root of the embedded FS
+	if err := goose.Up(sqlDB, "pkg/db/migrations"); err != nil {
+		return fmt.Errorf("goose up: %w", err)
+	}
+	return nil
+}
 
 // @title User API
 // @description This is a sample server for a user API.
@@ -34,17 +54,27 @@ import (
 func main() {
 	os.Setenv("TZ", "Asia/Bangkok")
 	config.LoadConfig()
-	db := db.Open(db.Config{
+	gormDB := db.Open(db.Config{
 		Host:     config.Get("DB_HOST", "localhost"),
 		Port:     config.GetInt("DB_PORT", 5432),
 		User:     config.Get("DB_USER", "user"),
 		Password: config.Get("DB_PASSWORD", "password"),
 		Dbname:   config.Get("DB_NAME", "postgres"),
 		Sslmode:  config.Get("DB_SSLMODE", "disable"),
-		
 	})
-	cmd.InitCmd()
-	appointmentRepository := repository.NewAppointmentRepository(db)
+	// cmd.InitCmd()
+	sqlDB, err := gormDB.DB()
+	if err != nil {
+		log.Fatalf("cannot get *sql.DB from gorm: %v", err)
+
+	}
+	if config.Get("MIGRATE_ON_START", "true") == "true" {
+		if err := migrateUp(sqlDB); err != nil {
+			log.Fatalf("migration failed: %v", err)
+		}
+	}
+
+	appointmentRepository := repository.NewAppointmentRepository(gormDB)
 	jwtService := jwt.NewJwtService(
 		config.Get("JWT_SECRET", "secret"),
 		config.GetInt("JWT_TTL", 3600),

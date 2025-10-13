@@ -22,6 +22,7 @@ func SetupRoutes(app *fiber.App, appointmentHandler *handlers.AppointmentHandler
 	v1.Use(middleware.JwtMiddleware(jwtSvc))
 
 	v1.Get("/doctor/:doctor_id/slots", appointmentHandler.GetDoctorSlots)
+	v1.Post("/book", appointmentHandler.BookAppointment)
 
 
 }

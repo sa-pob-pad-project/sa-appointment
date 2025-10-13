@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	fuuid "github.com/gofrs/uuid/v5"
-	guuid "github.com/google/uuid"
 	"golang.org/x/crypto/argon2"
 )
 
@@ -52,12 +50,4 @@ func VerifyPassword(password, encodedHash string) (bool, error) {
 	userInputPaswordHash := argon2.IDKey([]byte(password), decodedSalt, Iterations, Memory, Parallelism, KeyLength)
 	base64InputPasswordHash := base64.RawStdEncoding.EncodeToString(userInputPaswordHash)
 	return dbPasswordHash == base64InputPasswordHash, nil
-}
-
-func GenerateUUIDv7() guuid.UUID {
-	id, err := fuuid.NewV7()
-	if err != nil {
-		panic(err)
-	}
-	return guuid.UUID(id)
 }

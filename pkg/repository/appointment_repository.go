@@ -32,3 +32,11 @@ func (r *AppointmentRepository) GetAppointmentsOfDoctor(doctorID string, startDa
 	}
 	return &appointments, nil
 }
+
+func (r *AppointmentRepository) CreateAppointment(appointment *models.Appointment) error {
+	if err := r.db.Create(appointment).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
