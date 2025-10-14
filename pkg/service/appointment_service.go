@@ -22,6 +22,20 @@ func NewAppointmentService(appointmentRepo *repository.AppointmentRepository, jw
 		jwtService:      jwtService,
 	}
 }
+func (s *AppointmentService) GetPatientIncomingAppointments(patientID string) (*dto.GetIncomingAppointmentResponse, error) {
+	appointments, err := s.appointmentRepo.GetLatestAppointmentsOfPatient(patientID, time.Now())
+	if err != nil {
+		return nil, err
+	}
+	return &dto.GetIncomingAppointmentResponse{
+		DoctorID:   appointments.DoctorID.String(),
+		DoctorName: appointments.Doctor.Name,
+		Specialty:  appointments.Doctor.Specialty,
+		StartTime:  appointments.StartTime.Format("2006-01-02 15:04Z07:00"),
+		EndTime:    appointments.EndTime.Format("2006-01-02 15:04Z07:00"),
+	}, nil
+}
+
 
 func (s *AppointmentService) GetDoctorSlots(doctorID string) (*dto.GetDoctorSlotResponse, error) {
 
