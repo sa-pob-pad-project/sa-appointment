@@ -25,7 +25,7 @@ func JwtMiddleware(jwtService *jwt.JwtService) fiber.Handler {
 
 		c.Locals("userID", claims.UserID)
 		c.Locals("role", claims.Role)
-
+		c.Locals("accessToken", token)
 		return c.Next()
 	}
 }

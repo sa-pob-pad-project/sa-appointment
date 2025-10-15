@@ -1,13 +1,14 @@
 package main
 
 import (
+	"appointment-service/pkg/clients"
 	"appointment-service/pkg/config"
 	"appointment-service/pkg/db"
 	"appointment-service/pkg/handlers"
 	"appointment-service/pkg/jwt"
 	"appointment-service/pkg/repository"
 	"appointment-service/pkg/routes"
-	"appointment-service/pkg/service"
+	"appointment-service/pkg/services"
 	"bytes"
 	"database/sql"
 	"embed"
@@ -79,7 +80,9 @@ func main() {
 		config.Get("JWT_SECRET", "secret"),
 		config.GetInt("JWT_TTL", 3600),
 	)
-	appointmentService := service.NewAppointmentService(appointmentRepository, jwtService)
+	userServiceUrl := config.Get("USER_SERVICE_URL", "http://localhost:8000")
+	userClient := clients.New(userServiceUrl)
+	appointmentService := service.NewAppointmentService(appointmentRepository, userClient, jwtService)
 	appointmentHandler := handlers.NewAppointmentHandler(appointmentService)
 
 	app := fiber.New(fiber.Config{

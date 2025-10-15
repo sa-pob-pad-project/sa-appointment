@@ -1,10 +1,20 @@
-package context
+package contextUtils
 
 import (
 	"appointment-service/pkg/response"
+	"context"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+)
+
+type contextKey string
+
+const (
+	ContextKeyUserID      contextKey = "userID"
+	ContextKeyRole        contextKey = "role"
+	ContextKeyAccessToken contextKey = "accessToken"
 )
 
 func WithBody[T any]() fiber.Handler {
@@ -22,10 +32,37 @@ func WithBody[T any]() fiber.Handler {
 	}
 }
 
-func GetUserId(c *fiber.Ctx) string {
-	return c.Locals("userID").(string)
+func GetUserId(c context.Context) string {
+	return c.Value(ContextKeyUserID).(string)
 }
 
-func GetRole(c *fiber.Ctx) string {
-	return c.Locals("role").(string)
+func GetRole(c context.Context) string {
+	return c.Value(ContextKeyRole).(string)
+}
+
+func GetAccessToken(c context.Context) string {
+	return c.Value(ContextKeyAccessToken).(string)
+}
+
+func GetContext(c *fiber.Ctx) context.Context {
+	ctx := c.UserContext()
+	userID := c.Locals("userID") // ถ้ามีจาก auth middleware
+	if s, ok := userID.(string); ok {
+		ctx = context.WithValue(ctx, ContextKeyUserID, s)
+	}
+	role := c.Locals("role")
+	if s, ok := role.(string); ok {
+		ctx = context.WithValue(ctx, ContextKeyRole, s)
+	}
+	token := c.Locals("accessToken")
+	if s, ok := token.(string); ok {
+		ctx = context.WithValue(ctx, ContextKeyAccessToken, s)
+	}
+	if _, ok := ctx.Deadline(); !ok {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, 2*time.Second)
+		defer cancel()
+	}
+
+	return ctx
 }

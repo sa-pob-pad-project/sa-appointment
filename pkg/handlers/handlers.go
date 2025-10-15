@@ -1,9 +1,11 @@
 package handlers
 
 import (
-	"appointment-service/pkg/context"
+	"appointment-service/pkg/apperr"
+	contextUtils "appointment-service/pkg/context"
 	"appointment-service/pkg/dto"
-	"appointment-service/pkg/service"
+	"appointment-service/pkg/response"
+	service "appointment-service/pkg/services"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -18,56 +20,57 @@ func NewAppointmentHandler(appointmentService *service.AppointmentService) *Appo
 	}
 }
 
+func (h *AppointmentHandler) IncomingAppointmentOfPatient(c *fiber.Ctx) error {
+	ctx := contextUtils.GetContext(c)
+	appointments, err := h.appointmentService.GetPatientIncomingAppointments(ctx)
+	if err != nil {
+		return apperr.WriteError(c, err)
+	}
+	return response.OK(c, appointments)
+}
+
 func (h *AppointmentHandler) GetDoctorSlots(c *fiber.Ctx) error {
 	doctorID := c.Params("doctor_id")
 	slots, err := h.appointmentService.GetDoctorSlots(doctorID)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return apperr.WriteError(c, err)
 	}
-	return c.JSON(slots)
+	return response.OK(c, slots)
 }
 
 func (h *AppointmentHandler) BookAppointment(c *fiber.Ctx) error {
-	patientID := c.Locals("userID").(string)
+	ctx := contextUtils.GetContext(c)
 	var body dto.BookAppointmentRequest
 	if err := c.BodyParser(&body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return apperr.WriteError(c, apperr.New(apperr.CodeBadRequest, "invalid request body", err))
 	}
-	resp, err := h.appointmentService.BookAppointment(patientID, &body)
+	resp, err := h.appointmentService.BookAppointment(ctx, &body)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return apperr.WriteError(c, err)
 	}
-	return c.JSON(resp)
+	return response.Created(c, resp)
 }
 
 func (h *AppointmentHandler) CreateDoctorShift(c *fiber.Ctx) error {
-	doctorID := context.GetUserId(c)
-	role := context.GetRole(c)
-	if role != "doctor" {
-		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Only doctors can create shifts"})
-	}
+	ctx := contextUtils.GetContext(c)
 	var body dto.CreateDoctorShiftRequest
 	if err := c.BodyParser(&body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return apperr.WriteError(c, apperr.New(apperr.CodeBadRequest, "invalid request body", err))
 	}
-	if err := h.appointmentService.CreateDoctorShift(doctorID, &body); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	if err := h.appointmentService.CreateDoctorShift(ctx, &body); err != nil {
+		return apperr.WriteError(c, err)
 	}
-	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "Doctor shift created successfully"})
+	return response.Created(c, fiber.Map{"message": "Doctor shift created successfully"})
 }
 
 func (h *AppointmentHandler) DeleteDoctorShift(c *fiber.Ctx) error {
-	doctorID := context.GetUserId(c)
-	role := context.GetRole(c)
-	if role != "doctor" {
-		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "Only doctors can delete shifts"})
-	}
+	ctx := contextUtils.GetContext(c)
 	var body dto.DeleteDoctorShiftRequest
 	if err := c.BodyParser(&body); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return apperr.WriteError(c, apperr.New(apperr.CodeBadRequest, "invalid request body", err))
 	}
-	if err := h.appointmentService.DeleteDoctorShift(doctorID, body.ShiftID); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	if err := h.appointmentService.DeleteDoctorShift(ctx, body.ShiftID); err != nil {
+		return apperr.WriteError(c, err)
 	}
-	return c.JSON(fiber.Map{"message": "Doctor shift deleted successfully"})
+	return response.OK(c, fiber.Map{"message": "Doctor shift deleted successfully"})
 }
