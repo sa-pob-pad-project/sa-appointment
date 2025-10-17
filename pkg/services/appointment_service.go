@@ -79,6 +79,44 @@ func (s *AppointmentService) GetPatientAppointmentHistory(ctx context.Context) (
 	return &responses, nil
 }
 
+func (s *AppointmentService) GetLatestAppointmentHistory(ctx context.Context) (*dto.GetAppointmentHistoryResponse, error) {
+	patientID := contextUtils.GetUserId(ctx)
+	role := contextUtils.GetRole(ctx)
+	if role != "patient" {
+		return nil, apperr.New(apperr.CodeForbidden, "only patients can view their appointment history", nil)
+	}
+
+	appointment, err := s.appointmentRepo.GetLatestAppointmentOfPatient(patientID)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, apperr.New(apperr.CodeInternal, "failed to fetch appointment", err)
+	}
+
+	doctorProfiles, err := s.userClient.GetDoctorByIds(ctx, []string{appointment.DoctorID.String()})
+	if err != nil {
+		return nil, apperr.New(apperr.CodeInternal, "failed to fetch doctor profile", err)
+	}
+
+	if len(*doctorProfiles) == 0 {
+		return nil, apperr.New(apperr.CodeInternal, "doctor profile not found", nil)
+	}
+
+	doctorProfile := (*doctorProfiles)[0]
+	response := &dto.GetAppointmentHistoryResponse{
+		DoctorID:        appointment.DoctorID.String(),
+		DoctorFirstName: doctorProfile.FirstName,
+		DoctorLastName:  doctorProfile.LastName,
+		Specialty:       *doctorProfile.Specialty,
+		StartTime:       appointment.StartTime.Format("2006-01-02 15:04Z07:00"),
+		EndTime:         appointment.EndTime.Format("2006-01-02 15:04Z07:00"),
+		Status:          string(appointment.Status),
+	}
+
+	return response, nil
+}
+
 func (s *AppointmentService) GetPatientIncomingAppointments(ctx context.Context) (*[]dto.GetIncomingAppointmentResponse, error) {
 	patientID := contextUtils.GetUserId(ctx)
 	appointments, err := s.appointmentRepo.GetIncomingAppointmentsOfPatient(patientID, time.Now())

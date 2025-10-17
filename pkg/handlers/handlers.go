@@ -40,6 +40,30 @@ func (h *AppointmentHandler) GetPatientAppointmentHistory(c *fiber.Ctx) error {
 	return response.OK(c, appointments)
 }
 
+// GetLatestAppointmentHistory godoc
+// @Summary Get latest appointment history
+// @Description Retrieves the most recent appointment for the authenticated patient
+// @Tags Patient Appointments
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} response.Response{data=dto.GetAppointmentHistoryResponse} "Latest appointment details"
+// @Success 204 "No appointment found"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Failure 500 {object} response.ErrorResponse "Internal server error"
+// @Router /api/appointment/v1/history/latest [get]
+func (h *AppointmentHandler) GetLatestAppointmentHistory(c *fiber.Ctx) error {
+	ctx := contextUtils.GetContext(c)
+	appointment, err := h.appointmentService.GetLatestAppointmentHistory(ctx)
+	if err != nil {
+		return apperr.WriteError(c, err)
+	}
+	if appointment == nil {
+		return c.SendStatus(fiber.StatusNoContent)
+	}
+	return response.OK(c, appointment)
+}
+
 // IncomingAppointmentOfPatient godoc
 // @Summary Get patient's incoming appointments
 // @Description Retrieves all upcoming appointments for the authenticated patient

@@ -338,6 +338,38 @@ paths:
       summary: Create doctor shift
       tags:
       - Doctor Shifts
+  /api/appointment/v1/history/latest:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the most recent appointment for the authenticated patient
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Latest appointment details
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.GetAppointmentHistoryResponse'
+              type: object
+        "204":
+          description: No appointment found
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get latest appointment history
+      tags:
+      - Patient Appointments
   /api/appointment/v1/patient:
     post:
       consumes:

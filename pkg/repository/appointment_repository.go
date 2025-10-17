@@ -33,6 +33,14 @@ func (r *AppointmentRepository) GetAppointmentHistoryOfPatient(patientID string)
 	return &appointments, nil
 }
 
+func (r *AppointmentRepository) GetLatestAppointmentOfPatient(patientID string) (*models.Appointment, error) {
+	var appointment models.Appointment
+	if err := r.db.Where("patient_id = ? AND deleted_at IS NULL", patientID).Order("start_time desc").First(&appointment).Error; err != nil {
+		return nil, err
+	}
+	return &appointment, nil
+}
+
 func (r *AppointmentRepository) GetIncomingAppointmentsOfPatient(patientID string, date time.Time) (*[]models.Appointment, error) {
 	var appointments []models.Appointment
 	if err := r.db.Where("patient_id = ? AND start_time >= ? AND status = 'scheduled' AND deleted_at IS NULL", patientID, date).Order("start_time asc").Find(&appointments).Error; err != nil {
