@@ -3,6 +3,7 @@ package service
 import (
 	"appointment-service/pkg/apperr"
 	"appointment-service/pkg/clients"
+	client_dto "appointment-service/pkg/clients/dto"
 	contextUtils "appointment-service/pkg/context"
 	"appointment-service/pkg/dto"
 	"appointment-service/pkg/jwt"
@@ -30,6 +31,44 @@ func NewAppointmentService(appointmentRepo *repository.AppointmentRepository, us
 		jwtService:      jwtService,
 	}
 }
+
+func (s *AppointmentService) GetPatientAppointmentHistory(ctx context.Context) (*[]dto.GetAppointmentHistoryResponse, error) {
+	patientID := contextUtils.GetUserId(ctx)
+	appointments, err := s.appointmentRepo.GetAppointmentHistoryOfPatient(patientID)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return &[]dto.GetAppointmentHistoryResponse{}, nil
+		}
+		return nil, apperr.New(apperr.CodeInternal, "failed to fetch appointments", err)
+	}
+	doctorIds := []string{}
+	for _, appointment := range *appointments {
+		doctorIds = append(doctorIds, appointment.DoctorID.String())
+	}
+	doctorProfiles, err := s.userClient.GetDoctorByIds(ctx, doctorIds)
+	doctorIdToProfile := map[string]client_dto.GetDoctorProfileResponseDto{}
+	for _, profile := range *doctorProfiles {
+		doctorIdToProfile[profile.ID] = profile
+	}
+	if err != nil {
+		return nil, apperr.New(apperr.CodeInternal, "failed to fetch doctor profile", err)
+	}
+	var responses []dto.GetAppointmentHistoryResponse
+	for _, appointment := range *appointments {
+		doctorProfile := doctorIdToProfile[appointment.DoctorID.String()]
+		responses = append(responses, dto.GetAppointmentHistoryResponse{
+			DoctorID:        appointment.DoctorID.String(),
+			DoctorFirstName: doctorProfile.FirstName,
+			DoctorLastName:  doctorProfile.LastName,
+			Specialty:       *doctorProfile.Specialty,
+			StartTime:       appointment.StartTime.Format("2006-01-02 15:04Z07:00"),
+			EndTime:         appointment.EndTime.Format("2006-01-02 15:04Z07:00"),
+			Status:          string(appointment.Status),
+		})
+	}
+	return &responses, nil
+}
+
 func (s *AppointmentService) GetPatientIncomingAppointments(ctx context.Context) (*[]dto.GetIncomingAppointmentResponse, error) {
 	patientID := contextUtils.GetUserId(ctx)
 	appointments, err := s.appointmentRepo.GetIncomingAppointmentsOfPatient(patientID, time.Now())

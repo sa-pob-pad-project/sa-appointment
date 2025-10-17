@@ -21,6 +21,7 @@ func SetupRoutes(app *fiber.App, appointmentHandler *handlers.AppointmentHandler
 
 	v1.Use(middleware.JwtMiddleware(jwtSvc))
 
+	v1.Get("history", appointmentHandler.GetPatientAppointmentHistory)
 	v1.Get("/incoming", appointmentHandler.IncomingAppointmentOfPatient)
 	v1.Post("/", appointmentHandler.BookAppointment)
 

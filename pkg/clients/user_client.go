@@ -78,12 +78,12 @@ func (c *UserClient) doRequest(ctx context.Context, method, path string, body in
 	return nil
 }
 
-func (c *UserClient) GetDoctorByIds(ctx context.Context, doctorID []string) (*[]dto.GetDoctorProfileResponseDto, error) {
-	reqBody := dto.GetDoctorsByIDsRequestDto{
+func (c *UserClient) GetDoctorByIds(ctx context.Context, doctorID []string) (*[]client_dto.GetDoctorProfileResponseDto, error) {
+	reqBody := client_dto.GetDoctorsByIDsRequestDto{
 		DoctorIDs: doctorID,
 	}
 
-	var doctorProfiles []dto.GetDoctorProfileResponseDto
+	var doctorProfiles []client_dto.GetDoctorProfileResponseDto
 	if err := c.doRequest(ctx, http.MethodPost, "/v1/doctors", reqBody, &doctorProfiles); err != nil {
 		return nil, err
 	}
@@ -91,9 +91,9 @@ func (c *UserClient) GetDoctorByIds(ctx context.Context, doctorID []string) (*[]
 	return &doctorProfiles, nil
 }
 
-func (c *UserClient) GetDoctorById(ctx context.Context, doctorID string) (*dto.GetDoctorProfileResponseDto, error) {
-	var doctorProfile dto.GetDoctorProfileResponseDto
-	if err := c.doRequest(ctx, http.MethodPost, "/v1/doctors", dto.GetDoctorsByIDsRequestDto{DoctorIDs: []string{doctorID}}, &doctorProfile); err != nil {
+func (c *UserClient) GetDoctorById(ctx context.Context, doctorID string) (*client_dto.GetDoctorProfileResponseDto, error) {
+	var doctorProfile client_dto.GetDoctorProfileResponseDto
+	if err := c.doRequest(ctx, http.MethodPost, "/v1/doctors", client_dto.GetDoctorsByIDsRequestDto{DoctorIDs: []string{doctorID}}, &doctorProfile); err != nil {
 		return nil, err
 	}
 

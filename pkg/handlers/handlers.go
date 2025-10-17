@@ -19,6 +19,14 @@ func NewAppointmentHandler(appointmentService *service.AppointmentService) *Appo
 		appointmentService: appointmentService,
 	}
 }
+func (h *AppointmentHandler) GetPatientAppointmentHistory(c *fiber.Ctx) error {
+	ctx := contextUtils.GetContext(c)
+	appointments, err := h.appointmentService.GetPatientAppointmentHistory(ctx)
+	if err != nil {
+		return apperr.WriteError(c, err)
+	}
+	return response.OK(c, appointments)
+}
 
 func (h *AppointmentHandler) IncomingAppointmentOfPatient(c *fiber.Ctx) error {
 	ctx := contextUtils.GetContext(c)
