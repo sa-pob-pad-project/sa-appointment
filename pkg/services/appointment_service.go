@@ -34,6 +34,10 @@ func NewAppointmentService(appointmentRepo *repository.AppointmentRepository, us
 
 func (s *AppointmentService) GetPatientAppointmentHistory(ctx context.Context) (*[]dto.GetAppointmentHistoryResponse, error) {
 	patientID := contextUtils.GetUserId(ctx)
+	role := contextUtils.GetRole(ctx)
+	if role != "patient" {
+		return nil, apperr.New(apperr.CodeForbidden, "only patients can view their appointment history", nil)
+	}
 	appointments, err := s.appointmentRepo.GetAppointmentHistoryOfPatient(patientID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -45,7 +49,14 @@ func (s *AppointmentService) GetPatientAppointmentHistory(ctx context.Context) (
 	for _, appointment := range *appointments {
 		doctorIds = append(doctorIds, appointment.DoctorID.String())
 	}
+	fmt.Println("appointment", appointments)
+	if len(doctorIds) == 0 {
+		return &[]dto.GetAppointmentHistoryResponse{}, nil
+	}
 	doctorProfiles, err := s.userClient.GetDoctorByIds(ctx, doctorIds)
+	if err != nil {
+		return nil, apperr.New(apperr.CodeInternal, "failed to fetch doctor profile "+err.Error(), err)
+	}
 	doctorIdToProfile := map[string]client_dto.GetDoctorProfileResponseDto{}
 	for _, profile := range *doctorProfiles {
 		doctorIdToProfile[profile.ID] = profile
@@ -237,4 +248,77 @@ func (s *AppointmentService) DeleteDoctorShift(ctx context.Context, shiftID stri
 		return apperr.New(apperr.CodeInternal, "failed to delete shift", err)
 	}
 	return nil
+}
+
+func (s *AppointmentService) GetDoctorActiveShifts(ctx context.Context) (*[]dto.GetDoctorActiveShiftsResponse, error) {
+	role := contextUtils.GetRole(ctx)
+	if role != "doctor" {
+		return nil, apperr.New(apperr.CodeForbidden, "only doctors can view their shifts", nil)
+	}
+	doctorID := contextUtils.GetUserId(ctx)
+	shifts, err := s.appointmentRepo.GetDoctorShifts(doctorID)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return &[]dto.GetDoctorActiveShiftsResponse{}, nil
+		}
+		return nil, apperr.New(apperr.CodeInternal, "failed to fetch doctor shifts", err)
+	}
+
+	responses := []dto.GetDoctorActiveShiftsResponse{}
+	for _, shift := range *shifts {
+		responses = append(responses, dto.GetDoctorActiveShiftsResponse{
+			ShiftID:     shift.ID.String(),
+			Weekday:     string(shift.Weekday),
+			StartTime:   shift.StartTime.Format("15:04Z00:00"),
+			EndTime:     shift.EndTime.Format("15:04Z00:00"),
+			DurationMin: shift.DurationMin,
+		})
+	}
+	fmt.Println("Shifts", shifts)
+	return &responses, nil
+}
+
+func (s *AppointmentService) GetDoctorIncomingAppointments(ctx context.Context) (*[]dto.GetDoctorIncomingAppointmentsResponse, error) {
+	role := contextUtils.GetRole(ctx)
+	if role != "doctor" {
+		return nil, apperr.New(apperr.CodeForbidden, "only doctors can view their appointments", nil)
+	}
+	doctorID := contextUtils.GetUserId(ctx)
+	appointments, err := s.appointmentRepo.GetIncomingAppointmentsOfDoctor(doctorID, time.Now())
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return &[]dto.GetDoctorIncomingAppointmentsResponse{}, nil
+		}
+		return nil, apperr.New(apperr.CodeInternal, "failed to fetch appointments", err)
+	}
+
+	patientIds := []string{}
+	for _, appointment := range *appointments {
+		patientIds = append(patientIds, appointment.PatientID.String())
+	}
+
+	patientProfiles, err := s.userClient.GetPatientByIds(ctx, patientIds)
+	if err != nil {
+		return nil, apperr.New(apperr.CodeInternal, "failed to fetch patient profiles", err)
+	}
+
+	patientIdToProfile := map[string]client_dto.GetPatientProfileResponseDto{}
+	for _, profile := range *patientProfiles {
+		patientIdToProfile[profile.ID] = profile
+	}
+
+	var responses []dto.GetDoctorIncomingAppointmentsResponse
+	for _, appointment := range *appointments {
+		patientProfile := patientIdToProfile[appointment.PatientID.String()]
+		responses = append(responses, dto.GetDoctorIncomingAppointmentsResponse{
+			AppointmentID:    appointment.ID.String(),
+			PatientID:        appointment.PatientID.String(),
+			PatientFirstName: patientProfile.FirstName,
+			PatientLastName:  patientProfile.LastName,
+			StartTime:        appointment.StartTime.Format("2006-01-02 15:04Z07:00"),
+			EndTime:          appointment.EndTime.Format("2006-01-02 15:04Z07:00"),
+			Status:           string(appointment.Status),
+		})
+	}
+	return &responses, nil
 }

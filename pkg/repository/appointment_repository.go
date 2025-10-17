@@ -101,3 +101,11 @@ func (r *AppointmentRepository) DeleteDoctorShift(shiftID string) error {
 	}
 	return nil
 }
+
+func (r *AppointmentRepository) GetIncomingAppointmentsOfDoctor(doctorID string, date time.Time) (*[]models.Appointment, error) {
+	var appointments []models.Appointment
+	if err := r.db.Where("doctor_id = ? AND start_time >= ? AND status = 'scheduled' AND deleted_at IS NULL", doctorID, date).Order("start_time asc").Find(&appointments).Error; err != nil {
+		return nil, err
+	}
+	return &appointments, nil
+}

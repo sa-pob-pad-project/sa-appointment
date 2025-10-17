@@ -1,7 +1,7 @@
 package clients
 
 import (
-	"appointment-service/pkg/clients/dto"
+	client_dto "appointment-service/pkg/clients/dto"
 	contextUtils "appointment-service/pkg/context"
 	"bytes"
 	"context"
@@ -58,6 +58,10 @@ func (c *UserClient) doRequest(ctx context.Context, method, path string, body in
 	})
 
 	fmt.Println("Requesting URL:", url)
+	fmt.Println("With Method:", method)
+	if body != nil {
+		fmt.Println("With Body:", body)
+	}
 
 	resp, err := c.hc.Do(req)
 	if err != nil {
@@ -100,3 +104,15 @@ func (c *UserClient) GetDoctorById(ctx context.Context, doctorID string) (*clien
 	return &doctorProfile, nil
 }
 
+func (c *UserClient) GetPatientByIds(ctx context.Context, patientIDs []string) (*[]client_dto.GetPatientProfileResponseDto, error) {
+	reqBody := client_dto.GetPatientsByIDsRequestDto{
+		PatientIDs: patientIDs,
+	}
+
+	var patientProfiles []client_dto.GetPatientProfileResponseDto
+	if err := c.doRequest(ctx, http.MethodPost, "/v1/patients", reqBody, &patientProfiles); err != nil {
+		return nil, err
+	}
+
+	return &patientProfiles, nil
+}

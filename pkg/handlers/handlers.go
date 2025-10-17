@@ -82,3 +82,21 @@ func (h *AppointmentHandler) DeleteDoctorShift(c *fiber.Ctx) error {
 	}
 	return response.OK(c, fiber.Map{"message": "Doctor shift deleted successfully"})
 }
+
+func (h *AppointmentHandler) GetDoctorActiveShifts(c *fiber.Ctx) error {
+	ctx := contextUtils.GetContext(c)
+	shifts, err := h.appointmentService.GetDoctorActiveShifts(ctx)
+	if err != nil {
+		return apperr.WriteError(c, err)
+	}
+	return response.OK(c, shifts)
+}
+
+func (h *AppointmentHandler) GetDoctorIncomingAppointments(c *fiber.Ctx) error {
+	ctx := contextUtils.GetContext(c)
+	appointments, err := h.appointmentService.GetDoctorIncomingAppointments(ctx)
+	if err != nil {
+		return apperr.WriteError(c, err)
+	}
+	return response.OK(c, appointments)
+}
