@@ -93,6 +93,10 @@ func (s *AppointmentService) GetPatientIncomingAppointments(ctx context.Context)
 	for _, appointment := range *appointments {
 		doctorIds = append(doctorIds, appointment.DoctorID.String())
 	}
+	fmt.Println("appointment", appointments)
+	if len(doctorIds) == 0 {
+		return &[]dto.GetIncomingAppointmentResponse{}, nil
+	}
 	doctorProfiles, err := s.userClient.GetDoctorByIds(ctx, doctorIds)
 	if err != nil {
 		return nil, apperr.New(apperr.CodeInternal, "failed to fetch doctor profile", err)
@@ -291,7 +295,10 @@ func (s *AppointmentService) GetDoctorIncomingAppointments(ctx context.Context) 
 		}
 		return nil, apperr.New(apperr.CodeInternal, "failed to fetch appointments", err)
 	}
-
+	fmt.Println("Appointments", appointments)
+	if len(*appointments) == 0 {
+		return &[]dto.GetDoctorIncomingAppointmentsResponse{}, nil
+	}
 	patientIds := []string{}
 	for _, appointment := range *appointments {
 		patientIds = append(patientIds, appointment.PatientID.String())

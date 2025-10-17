@@ -81,6 +81,7 @@ func main() {
 		config.GetInt("JWT_TTL", 3600),
 	)
 	userServiceUrl := config.Get("USER_SERVICE_URL", "http://localhost:8000")
+	fmt.Println("userService", userServiceUrl)
 	userClient := clients.New(userServiceUrl)
 	appointmentService := service.NewAppointmentService(appointmentRepository, userClient, jwtService)
 	appointmentHandler := handlers.NewAppointmentHandler(appointmentService)
@@ -117,5 +118,7 @@ func main() {
 	routes.SetupRoutes(app, appointmentHandler, jwtService)
 	port := config.Get("APP_PORT", "8000")
 	fmt.Println("Server is running on port " + port)
-	app.Listen("localhost:" + port)
+	if err := app.Listen(":" + port); err != nil {
+		log.Fatal(err)
+	}
 }

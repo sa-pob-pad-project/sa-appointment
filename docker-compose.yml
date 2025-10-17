@@ -1,13 +1,13 @@
 version: '3.8'
 services:
-  postgres:
+  sa_appointment_postgres:
     image: postgres:17
     environment:
       POSTGRES_DB: sa_appointment
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
     ports:
-      - "5433:5433"
+      - "5433:5432"
     volumes:
       - ./volume/postgres:/var/lib/postgresql/data
     healthcheck:
@@ -16,21 +16,24 @@ services:
       timeout: 2s
       retries: 20
 
+
   sa_appointment:
     image: sa_appointment:latest
     build:
       context: .
       dockerfile: Dockerfile
     environment:
-      - DB_HOST=postgres
-      - DB_PORT=5433
+      - DB_HOST=sa_appointment_postgres
+      - DB_PORT=5432
+      - USER_SERVICE_URL=http://host.docker.internal:8000/api/user
     ports:
-      - "8001:8000"
+      - "8001:8001"
     depends_on:
-      postgres:
+      sa_appointment_postgres:
         condition: service_healthy
 
+
 networks:
-  default:
+  sa-network:
     driver: bridge
 
