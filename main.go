@@ -8,7 +8,7 @@ import (
 	"appointment-service/pkg/jwt"
 	"appointment-service/pkg/repository"
 	"appointment-service/pkg/routes"
-	"appointment-service/pkg/services"
+	service "appointment-service/pkg/services"
 	"bytes"
 	"database/sql"
 	"embed"
@@ -42,8 +42,8 @@ func migrateUp(sqlDB *sql.DB) error {
 	return nil
 }
 
-// @title User API
-// @description This is a sample server for a user API.
+// @title Appointment Service API
+// @description API for managing appointments, doctor shifts, and patient bookings
 // @version 1.0
 // @host localhost:8080
 // @BasePath /

@@ -2,6 +2,10 @@ package response
 
 import "github.com/gofiber/fiber/v2"
 
+type Response struct {
+	Data interface{} `json:"data,omitempty"`
+}
+
 type BaseResponse struct {
 	Data interface{} `json:"data,omitempty"`
 }

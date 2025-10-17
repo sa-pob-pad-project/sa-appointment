@@ -19,6 +19,18 @@ func NewAppointmentHandler(appointmentService *service.AppointmentService) *Appo
 		appointmentService: appointmentService,
 	}
 }
+
+// GetPatientAppointmentHistory godoc
+// @Summary Get patient appointment history
+// @Description Retrieves all past appointments for the authenticated patient
+// @Tags Patient Appointments
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} response.Response{data=[]dto.GetAppointmentHistoryResponse} "List of patient's past appointments"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Failure 500 {object} response.ErrorResponse "Internal server error"
+// @Router /api/appointment/v1/patient/history [get]
 func (h *AppointmentHandler) GetPatientAppointmentHistory(c *fiber.Ctx) error {
 	ctx := contextUtils.GetContext(c)
 	appointments, err := h.appointmentService.GetPatientAppointmentHistory(ctx)
@@ -28,6 +40,17 @@ func (h *AppointmentHandler) GetPatientAppointmentHistory(c *fiber.Ctx) error {
 	return response.OK(c, appointments)
 }
 
+// IncomingAppointmentOfPatient godoc
+// @Summary Get patient's incoming appointments
+// @Description Retrieves all upcoming appointments for the authenticated patient
+// @Tags Patient Appointments
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} response.Response{data=[]dto.GetIncomingAppointmentResponse} "List of patient's upcoming appointments"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Failure 500 {object} response.ErrorResponse "Internal server error"
+// @Router /api/appointment/v1/patient/incoming [get]
 func (h *AppointmentHandler) IncomingAppointmentOfPatient(c *fiber.Ctx) error {
 	ctx := contextUtils.GetContext(c)
 	appointments, err := h.appointmentService.GetPatientIncomingAppointments(ctx)
@@ -37,6 +60,20 @@ func (h *AppointmentHandler) IncomingAppointmentOfPatient(c *fiber.Ctx) error {
 	return response.OK(c, appointments)
 }
 
+// GetDoctorSlots godoc
+// @Summary Get available doctor slots
+// @Description Retrieves all available appointment slots for a specific doctor
+// @Tags Appointments
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param doctor_id path string true "Doctor UUID"
+// @Success 200 {object} response.Response{data=dto.GetDoctorSlotResponse} "Map of dates to available slots"
+// @Failure 400 {object} response.ErrorResponse "Bad request"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Failure 404 {object} response.ErrorResponse "Doctor not found"
+// @Failure 500 {object} response.ErrorResponse "Internal server error"
+// @Router /api/appointment/v1/doctor/{doctor_id}/slots [get]
 func (h *AppointmentHandler) GetDoctorSlots(c *fiber.Ctx) error {
 	doctorID := c.Params("doctor_id")
 	slots, err := h.appointmentService.GetDoctorSlots(doctorID)
@@ -46,6 +83,20 @@ func (h *AppointmentHandler) GetDoctorSlots(c *fiber.Ctx) error {
 	return response.OK(c, slots)
 }
 
+// BookAppointment godoc
+// @Summary Book an appointment
+// @Description Creates a new appointment for the authenticated patient with a doctor
+// @Tags Patient Appointments
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param request body dto.BookAppointmentRequest true "Appointment booking details"
+// @Success 201 {object} response.Response{data=dto.BookAppointmentResponse} "Appointment created successfully"
+// @Failure 400 {object} response.ErrorResponse "Bad request - invalid request body or validation error"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Failure 409 {object} response.ErrorResponse "Conflict - slot already booked"
+// @Failure 500 {object} response.ErrorResponse "Internal server error"
+// @Router /api/appointment/v1/patient [post]
 func (h *AppointmentHandler) BookAppointment(c *fiber.Ctx) error {
 	ctx := contextUtils.GetContext(c)
 	var body dto.BookAppointmentRequest
@@ -59,6 +110,19 @@ func (h *AppointmentHandler) BookAppointment(c *fiber.Ctx) error {
 	return response.Created(c, resp)
 }
 
+// CreateDoctorShift godoc
+// @Summary Create doctor shift
+// @Description Creates a new recurring shift schedule for the authenticated doctor
+// @Tags Doctor Shifts
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param request body dto.CreateDoctorShiftRequest true "Doctor shift details"
+// @Success 201 {object} response.Response{data=map[string]string} "Shift created successfully"
+// @Failure 400 {object} response.ErrorResponse "Bad request - invalid request body or validation error"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Failure 500 {object} response.ErrorResponse "Internal server error"
+// @Router /api/appointment/v1/doctor/shift [post]
 func (h *AppointmentHandler) CreateDoctorShift(c *fiber.Ctx) error {
 	ctx := contextUtils.GetContext(c)
 	var body dto.CreateDoctorShiftRequest
@@ -71,6 +135,20 @@ func (h *AppointmentHandler) CreateDoctorShift(c *fiber.Ctx) error {
 	return response.Created(c, fiber.Map{"message": "Doctor shift created successfully"})
 }
 
+// DeleteDoctorShift godoc
+// @Summary Delete doctor shift
+// @Description Soft deletes a doctor's shift schedule by shift ID
+// @Tags Doctor Shifts
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param request body dto.DeleteDoctorShiftRequest true "Shift deletion details"
+// @Success 200 {object} response.Response{data=map[string]string} "Shift deleted successfully"
+// @Failure 400 {object} response.ErrorResponse "Bad request - invalid request body or validation error"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Failure 404 {object} response.ErrorResponse "Shift not found"
+// @Failure 500 {object} response.ErrorResponse "Internal server error"
+// @Router /api/appointment/v1/doctor/shift [delete]
 func (h *AppointmentHandler) DeleteDoctorShift(c *fiber.Ctx) error {
 	ctx := contextUtils.GetContext(c)
 	var body dto.DeleteDoctorShiftRequest
@@ -83,6 +161,17 @@ func (h *AppointmentHandler) DeleteDoctorShift(c *fiber.Ctx) error {
 	return response.OK(c, fiber.Map{"message": "Doctor shift deleted successfully"})
 }
 
+// GetDoctorActiveShifts godoc
+// @Summary Get doctor's active shifts
+// @Description Retrieves all active shift schedules for the authenticated doctor
+// @Tags Doctor Shifts
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} response.Response{data=[]dto.GetDoctorActiveShiftsResponse} "List of doctor's active shifts"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Failure 500 {object} response.ErrorResponse "Internal server error"
+// @Router /api/appointment/v1/doctor/shift [get]
 func (h *AppointmentHandler) GetDoctorActiveShifts(c *fiber.Ctx) error {
 	ctx := contextUtils.GetContext(c)
 	shifts, err := h.appointmentService.GetDoctorActiveShifts(ctx)
@@ -92,6 +181,17 @@ func (h *AppointmentHandler) GetDoctorActiveShifts(c *fiber.Ctx) error {
 	return response.OK(c, shifts)
 }
 
+// GetDoctorIncomingAppointments godoc
+// @Summary Get doctor's incoming appointments
+// @Description Retrieves all upcoming appointments for the authenticated doctor
+// @Tags Doctor Appointments
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {object} response.Response{data=[]dto.GetDoctorIncomingAppointmentsResponse} "List of doctor's upcoming appointments"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Failure 500 {object} response.ErrorResponse "Internal server error"
+// @Router /api/appointment/v1/doctor [get]
 func (h *AppointmentHandler) GetDoctorIncomingAppointments(c *fiber.Ctx) error {
 	ctx := contextUtils.GetContext(c)
 	appointments, err := h.appointmentService.GetDoctorIncomingAppointments(ctx)

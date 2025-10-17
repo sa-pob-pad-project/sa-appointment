@@ -1,11 +1,453 @@
 basePath: /
+definitions:
+  dto.BookAppointmentRequest:
+    properties:
+      doctor_id:
+        type: string
+      start_time:
+        type: string
+    required:
+    - doctor_id
+    - start_time
+    type: object
+  dto.BookAppointmentResponse:
+    properties:
+      appointment_id:
+        type: string
+    type: object
+  dto.CreateDoctorShiftRequest:
+    properties:
+      duration_min:
+        minimum: 1
+        type: integer
+      end_time:
+        type: string
+      start_time:
+        type: string
+      weekday:
+        enum:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+        - sat
+        - sun
+        type: string
+    required:
+    - duration_min
+    - end_time
+    - start_time
+    - weekday
+    type: object
+  dto.DeleteDoctorShiftRequest:
+    properties:
+      shift_id:
+        type: string
+    required:
+    - shift_id
+    type: object
+  dto.DoctorSlot:
+    properties:
+      doctor_id:
+        type: string
+      end_time:
+        type: string
+      start_time:
+        type: string
+      status:
+        type: string
+    type: object
+  dto.GetAppointmentHistoryResponse:
+    properties:
+      doctor_first_name:
+        type: string
+      doctor_id:
+        type: string
+      doctor_last_name:
+        type: string
+      end_time:
+        type: string
+      specialty:
+        type: string
+      start_time:
+        type: string
+      status:
+        type: string
+    type: object
+  dto.GetDoctorActiveShiftsResponse:
+    properties:
+      duration_min:
+        type: integer
+      end_time:
+        type: string
+      shift_id:
+        type: string
+      start_time:
+        type: string
+      weekday:
+        type: string
+    type: object
+  dto.GetDoctorIncomingAppointmentsResponse:
+    properties:
+      appointment_id:
+        type: string
+      end_time:
+        type: string
+      patient_first_name:
+        type: string
+      patient_id:
+        type: string
+      patient_last_name:
+        type: string
+      start_time:
+        type: string
+      status:
+        type: string
+    type: object
+  dto.GetDoctorSlotResponse:
+    additionalProperties:
+      items:
+        $ref: '#/definitions/dto.DoctorSlot'
+      type: array
+    type: object
+  dto.GetIncomingAppointmentResponse:
+    properties:
+      doctor_first_name:
+        type: string
+      doctor_id:
+        type: string
+      doctor_last_name:
+        type: string
+      end_time:
+        type: string
+      specialty:
+        type: string
+      start_time:
+        type: string
+    type: object
+  response.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  response.Response:
+    properties:
+      data: {}
+    type: object
 host: localhost:8080
 info:
   contact: {}
-  description: This is a sample server for a user API.
-  title: User API
+  description: API for managing appointments, doctor shifts, and patient bookings
+  title: Appointment Service API
   version: "1.0"
-paths: {}
+paths:
+  /api/appointment/v1/doctor:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all upcoming appointments for the authenticated doctor
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of doctor's upcoming appointments
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.GetDoctorIncomingAppointmentsResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get doctor's incoming appointments
+      tags:
+      - Doctor Appointments
+  /api/appointment/v1/doctor/{doctor_id}/slots:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all available appointment slots for a specific doctor
+      parameters:
+      - description: Doctor UUID
+        in: path
+        name: doctor_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Map of dates to available slots
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.GetDoctorSlotResponse'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Doctor not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get available doctor slots
+      tags:
+      - Appointments
+  /api/appointment/v1/doctor/shift:
+    delete:
+      consumes:
+      - application/json
+      description: Soft deletes a doctor's shift schedule by shift ID
+      parameters:
+      - description: Shift deletion details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DeleteDoctorShiftRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Shift deleted successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "400":
+          description: Bad request - invalid request body or validation error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Shift not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete doctor shift
+      tags:
+      - Doctor Shifts
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all active shift schedules for the authenticated doctor
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of doctor's active shifts
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.GetDoctorActiveShiftsResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get doctor's active shifts
+      tags:
+      - Doctor Shifts
+    post:
+      consumes:
+      - application/json
+      description: Creates a new recurring shift schedule for the authenticated doctor
+      parameters:
+      - description: Doctor shift details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateDoctorShiftRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Shift created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "400":
+          description: Bad request - invalid request body or validation error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create doctor shift
+      tags:
+      - Doctor Shifts
+  /api/appointment/v1/patient:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new appointment for the authenticated patient with a
+        doctor
+      parameters:
+      - description: Appointment booking details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BookAppointmentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Appointment created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.BookAppointmentResponse'
+              type: object
+        "400":
+          description: Bad request - invalid request body or validation error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "409":
+          description: Conflict - slot already booked
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Book an appointment
+      tags:
+      - Patient Appointments
+  /api/appointment/v1/patient/history:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all past appointments for the authenticated patient
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of patient's past appointments
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.GetAppointmentHistoryResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get patient appointment history
+      tags:
+      - Patient Appointments
+  /api/appointment/v1/patient/incoming:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all upcoming appointments for the authenticated patient
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of patient's upcoming appointments
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.GetIncomingAppointmentResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get patient's incoming appointments
+      tags:
+      - Patient Appointments
 schemes:
 - http
 securityDefinitions:
