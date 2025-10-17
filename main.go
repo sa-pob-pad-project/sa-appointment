@@ -45,7 +45,7 @@ func migrateUp(sqlDB *sql.DB) error {
 // @title Appointment Service API
 // @description API for managing appointments, doctor shifts, and patient bookings
 // @version 1.0
-// @host localhost:8080
+// @host localhost:8081
 // @BasePath /
 // @schemes http
 // @securityDefinitions.apikey ApiKeyAuth
