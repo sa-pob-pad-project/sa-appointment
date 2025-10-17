@@ -17,14 +17,6 @@ func NewAppointmentRepository(db *gorm.DB) *AppointmentRepository {
 	}
 }
 
-func (r *AppointmentRepository) GetDoctorShifts(doctorID string) (*[]models.DoctorShift, error) {
-	var shifts []models.DoctorShift
-	if err := r.db.Where("doctor_id = ? AND deleted_at IS NULL", doctorID).Find(&shifts).Error; err != nil {
-		return nil, err
-	}
-	return &shifts, nil
-}
-
 func (r *AppointmentRepository) GetLatestAppointmentsOfDoctor(doctorID string, startDate time.Time) (*models.Appointment, error) {
 	var appointment models.Appointment
 	if err := r.db.Where("doctor_id = ? AND start_time >= ? AND deleted_at IS NULL", doctorID, startDate).Order("start_time desc").First(&appointment).Error; err != nil {
@@ -67,36 +59,6 @@ func (r *AppointmentRepository) GetAppointmentsOfPatient(patientID string) (*[]m
 
 func (r *AppointmentRepository) CreateAppointment(appointment *models.Appointment) error {
 	if err := r.db.Create(appointment).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r *AppointmentRepository) CreateDoctorShift(shift *models.DoctorShift) error {
-	if err := r.db.Create(shift).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func (r *AppointmentRepository) GetDoctorShiftsByDoctorID(doctorID string) (*[]models.DoctorShift, error) {
-	var shifts []models.DoctorShift
-	if err := r.db.Where("doctor_id = ? AND deleted_at IS NULL", doctorID).Find(&shifts).Error; err != nil {
-		return nil, err
-	}
-	return &shifts, nil
-}
-
-func (r *AppointmentRepository) GetDoctorShiftByID(shiftID string) (*models.DoctorShift, error) {
-	var shift models.DoctorShift
-	if err := r.db.Where("id = ? AND deleted_at IS NULL", shiftID).First(&shift).Error; err != nil {
-		return nil, err
-	}
-	return &shift, nil
-}
-
-func (r *AppointmentRepository) DeleteDoctorShift(shiftID string) error {
-	if err := r.db.Where("id = ?", shiftID).Delete(&models.DoctorShift{}).Error; err != nil {
 		return err
 	}
 	return nil

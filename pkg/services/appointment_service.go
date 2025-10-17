@@ -20,13 +20,15 @@ import (
 
 type AppointmentService struct {
 	appointmentRepo *repository.AppointmentRepository
+	doctorShiftRepo *repository.DoctorShiftRepository
 	userClient      *clients.UserClient
 	jwtService      *jwt.JwtService
 }
 
-func NewAppointmentService(appointmentRepo *repository.AppointmentRepository, userClient *clients.UserClient, jwtService *jwt.JwtService) *AppointmentService {
+func NewAppointmentService(appointmentRepo *repository.AppointmentRepository, doctorShiftRepo *repository.DoctorShiftRepository, userClient *clients.UserClient, jwtService *jwt.JwtService) *AppointmentService {
 	return &AppointmentService{
 		appointmentRepo: appointmentRepo,
+		doctorShiftRepo: doctorShiftRepo,
 		userClient:      userClient,
 		jwtService:      jwtService,
 	}
@@ -60,9 +62,6 @@ func (s *AppointmentService) GetPatientAppointmentHistory(ctx context.Context) (
 	doctorIdToProfile := map[string]client_dto.GetDoctorProfileResponseDto{}
 	for _, profile := range *doctorProfiles {
 		doctorIdToProfile[profile.ID] = profile
-	}
-	if err != nil {
-		return nil, apperr.New(apperr.CodeInternal, "failed to fetch doctor profile", err)
 	}
 	var responses []dto.GetAppointmentHistoryResponse
 	for _, appointment := range *appointments {
@@ -119,7 +118,7 @@ func (s *AppointmentService) GetPatientIncomingAppointments(ctx context.Context)
 
 func (s *AppointmentService) GetDoctorSlots(doctorID string) (*dto.GetDoctorSlotResponse, error) {
 
-	shifts, err := s.appointmentRepo.GetDoctorShifts(doctorID)
+	shifts, err := s.doctorShiftRepo.GetDoctorShifts(doctorID)
 	if err != nil {
 		return nil, apperr.New(apperr.CodeInternal, "failed to fetch doctor shifts", err)
 	}
@@ -226,7 +225,7 @@ func (s *AppointmentService) CreateDoctorShift(ctx context.Context, shift *dto.C
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
-	if err := s.appointmentRepo.CreateDoctorShift(shiftModel); err != nil {
+	if err := s.doctorShiftRepo.CreateDoctorShift(shiftModel); err != nil {
 		return apperr.New(apperr.CodeInternal, "failed to create doctor shift", err)
 	}
 	return nil
@@ -238,7 +237,7 @@ func (s *AppointmentService) DeleteDoctorShift(ctx context.Context, shiftID stri
 		return apperr.New(apperr.CodeForbidden, "only doctors can delete shifts", nil)
 	}
 	doctorID := contextUtils.GetUserId(ctx)
-	shift, err := s.appointmentRepo.GetDoctorShiftByID(shiftID)
+	shift, err := s.doctorShiftRepo.GetDoctorShiftByID(shiftID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return apperr.New(apperr.CodeNotFound, "shift not found", err)
@@ -248,7 +247,7 @@ func (s *AppointmentService) DeleteDoctorShift(ctx context.Context, shiftID stri
 	if shift.DoctorID.String() != doctorID {
 		return apperr.New(apperr.CodeForbidden, "unauthorized to delete this shift", nil)
 	}
-	if err := s.appointmentRepo.DeleteDoctorShift(shiftID); err != nil {
+	if err := s.doctorShiftRepo.DeleteDoctorShift(shiftID); err != nil {
 		return apperr.New(apperr.CodeInternal, "failed to delete shift", err)
 	}
 	return nil
@@ -260,7 +259,7 @@ func (s *AppointmentService) GetDoctorActiveShifts(ctx context.Context) (*[]dto.
 		return nil, apperr.New(apperr.CodeForbidden, "only doctors can view their shifts", nil)
 	}
 	doctorID := contextUtils.GetUserId(ctx)
-	shifts, err := s.appointmentRepo.GetDoctorShifts(doctorID)
+	shifts, err := s.doctorShiftRepo.GetDoctorShifts(doctorID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return &[]dto.GetDoctorActiveShiftsResponse{}, nil

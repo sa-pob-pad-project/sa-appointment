@@ -76,6 +76,7 @@ func main() {
 	}
 
 	appointmentRepository := repository.NewAppointmentRepository(gormDB)
+	doctorShiftRepository := repository.NewDoctorShiftRepository(gormDB)
 	jwtService := jwt.NewJwtService(
 		config.Get("JWT_SECRET", "secret"),
 		config.GetInt("JWT_TTL", 3600),
@@ -83,7 +84,7 @@ func main() {
 	userServiceUrl := config.Get("USER_SERVICE_URL", "http://localhost:8000")
 	fmt.Println("userService", userServiceUrl)
 	userClient := clients.New(userServiceUrl)
-	appointmentService := service.NewAppointmentService(appointmentRepository, userClient, jwtService)
+	appointmentService := service.NewAppointmentService(appointmentRepository, doctorShiftRepository, userClient, jwtService)
 	appointmentHandler := handlers.NewAppointmentHandler(appointmentService)
 
 	app := fiber.New(fiber.Config{
