@@ -30,28 +30,37 @@ func NewAppointmentService(appointmentRepo *repository.AppointmentRepository, us
 		jwtService:      jwtService,
 	}
 }
-func (s *AppointmentService) GetPatientIncomingAppointments(ctx context.Context) (*dto.GetIncomingAppointmentResponse, error) {
+func (s *AppointmentService) GetPatientIncomingAppointments(ctx context.Context) (*[]dto.GetIncomingAppointmentResponse, error) {
 	patientID := contextUtils.GetUserId(ctx)
-	appointments, err := s.appointmentRepo.GetLatestAppointmentsOfPatient(patientID, time.Now())
+	appointments, err := s.appointmentRepo.GetIncomingAppointmentsOfPatient(patientID, time.Now())
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, nil
+			return &[]dto.GetIncomingAppointmentResponse{}, nil
 		}
 		return nil, apperr.New(apperr.CodeInternal, "failed to fetch appointments", err)
 	}
-	doctorProfile, err := s.userClient.GetDoctorById(ctx, appointments.DoctorID.String())
+	doctorIds := []string{}
+	for _, appointment := range *appointments {
+		doctorIds = append(doctorIds, appointment.DoctorID.String())
+	}
+	doctorProfiles, err := s.userClient.GetDoctorByIds(ctx, doctorIds)
 	if err != nil {
 		return nil, apperr.New(apperr.CodeInternal, "failed to fetch doctor profile", err)
 	}
 
-	return &dto.GetIncomingAppointmentResponse{
-		DoctorID:        appointments.DoctorID.String(),
-		DoctorFirstName: doctorProfile.FirstName,
-		DoctorLastName:  doctorProfile.LastName,
-		Specialty:       *doctorProfile.Specialty,
-		StartTime:       appointments.StartTime.Format("2006-01-02 15:04Z07:00"),
-		EndTime:         appointments.EndTime.Format("2006-01-02 15:04Z07:00"),
-	}, nil
+	var responses []dto.GetIncomingAppointmentResponse
+	for i, appointment := range *appointments {
+		doctorProfile := (*doctorProfiles)[i]
+		responses = append(responses, dto.GetIncomingAppointmentResponse{
+			DoctorID:        appointment.DoctorID.String(),
+			DoctorFirstName: doctorProfile.FirstName,
+			DoctorLastName:  doctorProfile.LastName,
+			Specialty:       *doctorProfile.Specialty,
+			StartTime:       appointment.StartTime.Format("2006-01-02 15:04Z07:00"),
+			EndTime:         appointment.EndTime.Format("2006-01-02 15:04Z07:00"),
+		})
+	}
+	return &responses, nil
 }
 
 func (s *AppointmentService) GetDoctorSlots(doctorID string) (*dto.GetDoctorSlotResponse, error) {
@@ -121,7 +130,7 @@ func (s *AppointmentService) BookAppointment(ctx context.Context, req *dto.BookA
 	appointmentID := utils.GenerateUUIDv7()
 	doctorID := utils.StringToUUIDv7(req.DoctorID)
 	patientUUID := utils.StringToUUIDv7(patientID)
-	_, err := s.userClient.GetDoctorById(ctx, req.DoctorID)
+	_, err := s.userClient.GetDoctorByIds(ctx, []string{req.DoctorID})
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, apperr.New(apperr.CodeNotFound, "doctor not found", err)

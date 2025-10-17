@@ -41,6 +41,14 @@ func (r *AppointmentRepository) GetLatestAppointmentsOfPatient(patientID string,
 	return &appointment, nil
 }
 
+func (r *AppointmentRepository) GetIncomingAppointmentsOfPatient(patientID string, date time.Time) (*[]models.Appointment, error) {
+	var appointments []models.Appointment
+	if err := r.db.Where("patient_id = ? AND start_time >= ? AND deleted_at IS NULL", patientID, date).Order("start_time asc").Find(&appointments).Error; err != nil {
+		return nil, err
+	}
+	return &appointments, nil
+}
+
 func (r *AppointmentRepository) GetAppointmentsOfDoctor(doctorID string, startDate, endDate time.Time) (*[]models.Appointment, error) {
 	var appointments []models.Appointment
 	if err := r.db.Where("doctor_id = ? AND start_time >= ? AND end_time <= ? AND deleted_at IS NULL", doctorID, startDate, endDate).Order("start_time desc").Find(&appointments).Error; err != nil {
