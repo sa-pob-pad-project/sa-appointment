@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
     ports:
-      - "5432:5432"
+      - "5433:5433"
     volumes:
       - ./volume/postgres:/var/lib/postgresql/data
     healthcheck:
@@ -23,6 +23,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - DB_HOST=postgres
+      - DB_PORT=5433
     ports:
       - "8001:8000"
     depends_on:
