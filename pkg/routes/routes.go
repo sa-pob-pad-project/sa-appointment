@@ -15,8 +15,9 @@ import (
 func SetupRoutes(app *fiber.App, appointmentHandler *handlers.AppointmentHandler, jwtSvc *jwt.JwtService) {
 
 	api := app.Group("/api")
-	api.Get("/swagger/*", swagger.HandlerDefault)
 	appointment := api.Group("/appointment")
+	appointment.Get("/swagger/*", swagger.HandlerDefault)
+
 	v1 := appointment.Group("/v1")
 
 	v1.Use(middleware.JwtMiddleware(jwtSvc))
