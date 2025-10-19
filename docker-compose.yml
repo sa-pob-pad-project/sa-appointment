@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 services:
   sa_appointment_postgres:
     image: postgres:17
@@ -18,7 +18,6 @@ services:
     networks:
       - default
 
-
   sa_appointment:
     image: sa_appointment:latest
     build:
@@ -35,10 +34,7 @@ services:
         condition: service_healthy
     networks:
       - default
-      - sa_gateway_net
 
 networks:
   default:
     driver: bridge
-  sa_gateway_net:
-    external: true
