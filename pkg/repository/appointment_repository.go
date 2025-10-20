@@ -79,3 +79,11 @@ func (r *AppointmentRepository) GetIncomingAppointmentsOfDoctor(doctorID string,
 	}
 	return &appointments, nil
 }
+
+func (r *AppointmentRepository) FindAppointmentByStartTimeAndDoctorID(startTime time.Time, doctorID string) (*models.Appointment, error) {
+	var appointment models.Appointment
+	if err := r.db.Where("start_time = ? AND doctor_id = ? AND deleted_at IS NULL", startTime, doctorID).First(&appointment).Error; err != nil {
+		return nil, err
+	}
+	return &appointment, nil
+}

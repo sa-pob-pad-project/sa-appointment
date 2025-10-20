@@ -228,6 +228,13 @@ func (s *AppointmentService) BookAppointment(ctx context.Context, req *dto.BookA
 		}
 		return nil, apperr.New(apperr.CodeInternal, "failed to fetch doctor profile", err)
 	}
+	existingAppointment, err := s.appointmentRepo.FindAppointmentByStartTimeAndDoctorID(startTime, req.DoctorID)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, apperr.New(apperr.CodeInternal, "failed to check appointment slot", err)
+	}
+	if existingAppointment != nil {
+		return nil, apperr.New(apperr.CodeConflict, "appointment slot already booked", nil)
+	}
 	appointment := &models.Appointment{
 		ID:        appointmentID,
 		PatientID: patientUUID,
