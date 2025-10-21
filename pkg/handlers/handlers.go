@@ -224,3 +224,30 @@ func (h *AppointmentHandler) GetDoctorIncomingAppointments(c *fiber.Ctx) error {
 	}
 	return response.OK(c, appointments)
 }
+
+// CancelAppointment godoc
+// @Summary Cancel an appointment
+// @Description Cancels an existing appointment. Both patients and doctors can cancel their appointments.
+// @Tags Appointments
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Param request body dto.CancelAppointmentRequest true "Appointment cancellation details"
+// @Success 200 {object} response.Response{data=map[string]string} "Appointment cancelled successfully"
+// @Failure 400 {object} response.ErrorResponse "Bad request - invalid request body or validation error"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Failure 404 {object} response.ErrorResponse "Appointment not found"
+// @Failure 409 {object} response.ErrorResponse "Conflict - appointment already cancelled or in the past"
+// @Failure 500 {object} response.ErrorResponse "Internal server error"
+// @Router /api/appointment/v1/cancel [post]
+func (h *AppointmentHandler) CancelAppointment(c *fiber.Ctx) error {
+	ctx := contextUtils.GetContext(c)
+	var body dto.CancelAppointmentRequest
+	if err := c.BodyParser(&body); err != nil {
+		return apperr.WriteError(c, apperr.New(apperr.CodeBadRequest, "invalid request body", err))
+	}
+	if err := h.appointmentService.CancelAppointment(ctx, body.AppointmentID); err != nil {
+		return apperr.WriteError(c, err)
+	}
+	return response.OK(c, fiber.Map{"message": "Appointment cancelled successfully"})
+}

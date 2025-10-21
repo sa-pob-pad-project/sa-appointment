@@ -87,3 +87,18 @@ func (r *AppointmentRepository) FindAppointmentByStartTimeAndDoctorID(startTime 
 	}
 	return &appointment, nil
 }
+
+func (r *AppointmentRepository) GetAppointmentByID(appointmentID string) (*models.Appointment, error) {
+	var appointment models.Appointment
+	if err := r.db.Where("id = ? AND deleted_at IS NULL", appointmentID).First(&appointment).Error; err != nil {
+		return nil, err
+	}
+	return &appointment, nil
+}
+
+func (r *AppointmentRepository) CancelAppointment(appointmentID string) error {
+	if err := r.db.Model(&models.Appointment{}).Where("id = ?", appointmentID).Update("status", models.AppointmentStatusCancelled).Error; err != nil {
+		return err
+	}
+	return nil
+}

@@ -377,3 +377,45 @@ func (s *AppointmentService) GetDoctorIncomingAppointments(ctx context.Context) 
 	}
 	return &responses, nil
 }
+
+func (s *AppointmentService) CancelAppointment(ctx context.Context, appointmentID string) error {
+	userID := contextUtils.GetUserId(ctx)
+	role := contextUtils.GetRole(ctx)
+
+	appointment, err := s.appointmentRepo.GetAppointmentByID(appointmentID)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return apperr.New(apperr.CodeNotFound, "appointment not found", err)
+		}
+		return apperr.New(apperr.CodeInternal, "failed to fetch appointment", err)
+	}
+
+	// Check if appointment belongs to patient or doctor
+	if role == "patient" {
+		if appointment.PatientID.String() != userID {
+			return apperr.New(apperr.CodeForbidden, "unauthorized to cancel this appointment", nil)
+		}
+	} else if role == "doctor" {
+		if appointment.DoctorID.String() != userID {
+			return apperr.New(apperr.CodeForbidden, "unauthorized to cancel this appointment", nil)
+		}
+	} else {
+		return apperr.New(apperr.CodeForbidden, "invalid role", nil)
+	}
+
+	// Check if appointment is already cancelled
+	if appointment.Status == models.AppointmentStatusCancelled {
+		return apperr.New(apperr.CodeConflict, "appointment is already cancelled", nil)
+	}
+
+	// Check if appointment is in the past
+	if appointment.StartTime.Before(time.Now()) {
+		return apperr.New(apperr.CodeConflict, "cannot cancel past appointments", nil)
+	}
+
+	if err := s.appointmentRepo.CancelAppointment(appointmentID); err != nil {
+		return apperr.New(apperr.CodeInternal, "failed to cancel appointment", err)
+	}
+
+	return nil
+}

@@ -34,4 +34,5 @@ func SetupRoutes(app *fiber.App, appointmentHandler *handlers.AppointmentHandler
 	v1.Get("/doctor/shift", appointmentHandler.GetDoctorActiveShifts)
 	v1.Get("/doctor", appointmentHandler.GetDoctorIncomingAppointments)
 
+	v1.Post("/cancel", appointmentHandler.CancelAppointment)
 }

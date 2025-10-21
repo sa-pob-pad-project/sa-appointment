@@ -15,6 +15,13 @@ definitions:
       appointment_id:
         type: string
     type: object
+  dto.CancelAppointmentRequest:
+    properties:
+      appointment_id:
+        type: string
+    required:
+    - appointment_id
+    type: object
   dto.CreateDoctorShiftRequest:
     properties:
       duration_min:
@@ -142,6 +149,58 @@ info:
   title: Appointment Service API
   version: "1.0"
 paths:
+  /api/appointment/v1/cancel:
+    post:
+      consumes:
+      - application/json
+      description: Cancels an existing appointment. Both patients and doctors can
+        cancel their appointments.
+      parameters:
+      - description: Appointment cancellation details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CancelAppointmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Appointment cancelled successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+        "400":
+          description: Bad request - invalid request body or validation error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Appointment not found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "409":
+          description: Conflict - appointment already cancelled or in the past
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Cancel an appointment
+      tags:
+      - Appointments
   /api/appointment/v1/doctor:
     get:
       consumes:
