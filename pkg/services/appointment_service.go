@@ -201,9 +201,8 @@ func (s *AppointmentService) GetDoctorSlots(doctorID string) (*dto.GetDoctorSlot
 
 		for t := shift.StartTime; t.Before(shift.EndTime); t = t.Add(slotInterval) {
 			available := "available"
-			if _, exists := appointmentsMap[day.Format("2006-01-02")+" "+t.Format("15:04Z00:00")]; exists {
+			if item, exists := appointmentsMap[day.Format("2006-01-02")+" "+t.Format("15:04Z00:00")]; exists && item.Status == models.AppointmentStatusScheduled {
 				available = "scheduled"
-
 			}
 			slots[day] = append(slots[day], dto.DoctorSlot{
 				DoctorID:  doctorID,
@@ -239,7 +238,7 @@ func (s *AppointmentService) BookAppointment(ctx context.Context, req *dto.BookA
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return nil, apperr.New(apperr.CodeInternal, "failed to check appointment slot", err)
 	}
-	if existingAppointment != nil {
+	if existingAppointment != nil && existingAppointment.Status == models.AppointmentStatusScheduled {
 		return nil, apperr.New(apperr.CodeConflict, "appointment slot already booked", nil)
 	}
 	appointment := &models.Appointment{
