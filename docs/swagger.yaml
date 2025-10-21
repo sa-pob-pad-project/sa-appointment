@@ -67,6 +67,8 @@ definitions:
     type: object
   dto.GetAppointmentHistoryResponse:
     properties:
+      appointment_id:
+        type: string
       doctor_first_name:
         type: string
       doctor_id:
@@ -120,6 +122,8 @@ definitions:
     type: object
   dto.GetIncomingAppointmentResponse:
     properties:
+      appointment_id:
+        type: string
       doctor_first_name:
         type: string
       doctor_id:

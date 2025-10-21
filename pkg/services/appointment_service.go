@@ -67,6 +67,7 @@ func (s *AppointmentService) GetPatientAppointmentHistory(ctx context.Context) (
 	for _, appointment := range *appointments {
 		doctorProfile := doctorIdToProfile[appointment.DoctorID.String()]
 		responses = append(responses, dto.GetAppointmentHistoryResponse{
+			AppointmentID:   appointment.ID.String(),
 			DoctorID:        appointment.DoctorID.String(),
 			DoctorFirstName: doctorProfile.FirstName,
 			DoctorLastName:  doctorProfile.LastName,
@@ -105,6 +106,7 @@ func (s *AppointmentService) GetLatestAppointmentHistory(ctx context.Context) (*
 
 	doctorProfile := (*doctorProfiles)[0]
 	response := &dto.GetAppointmentHistoryResponse{
+		AppointmentID:   appointment.ID.String(),
 		DoctorID:        appointment.DoctorID.String(),
 		DoctorFirstName: doctorProfile.FirstName,
 		DoctorLastName:  doctorProfile.LastName,
@@ -147,6 +149,7 @@ func (s *AppointmentService) GetPatientIncomingAppointments(ctx context.Context)
 	for _, appointment := range *appointments {
 		doctorProfile := profileMap[appointment.DoctorID.String()]
 		responses = append(responses, dto.GetIncomingAppointmentResponse{
+			AppointmentID:   appointment.ID.String(),
 			DoctorID:        appointment.DoctorID.String(),
 			DoctorFirstName: doctorProfile.FirstName,
 			DoctorLastName:  doctorProfile.LastName,

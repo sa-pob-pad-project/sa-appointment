@@ -768,6 +768,9 @@ const docTemplate = `{
         "dto.GetAppointmentHistoryResponse": {
             "type": "object",
             "properties": {
+                "appointment_id": {
+                    "type": "string"
+                },
                 "doctor_first_name": {
                     "type": "string"
                 },
@@ -849,6 +852,9 @@ const docTemplate = `{
         "dto.GetIncomingAppointmentResponse": {
             "type": "object",
             "properties": {
+                "appointment_id": {
+                    "type": "string"
+                },
                 "doctor_first_name": {
                     "type": "string"
                 },

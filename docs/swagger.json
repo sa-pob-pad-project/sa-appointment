@@ -765,6 +765,9 @@
         "dto.GetAppointmentHistoryResponse": {
             "type": "object",
             "properties": {
+                "appointment_id": {
+                    "type": "string"
+                },
                 "doctor_first_name": {
                     "type": "string"
                 },
@@ -846,6 +849,9 @@
         "dto.GetIncomingAppointmentResponse": {
             "type": "object",
             "properties": {
+                "appointment_id": {
+                    "type": "string"
+                },
                 "doctor_first_name": {
                     "type": "string"
                 },
