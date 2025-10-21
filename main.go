@@ -118,7 +118,7 @@ func main() {
 	routes.SetupRoutes(app, appointmentHandler, jwtService)
 	port := config.Get("APP_PORT", "8001")
 	fmt.Println("Server is running on port " + port)
-	if err := app.Listen(":" + port); err != nil {
+	if err := app.Listen("localhost:" + port); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -138,10 +138,14 @@ func (s *AppointmentService) GetPatientIncomingAppointments(ctx context.Context)
 	if err != nil {
 		return nil, apperr.New(apperr.CodeInternal, "failed to fetch doctor profile", err)
 	}
-
+	fmt.Println("doctorProfiles", doctorProfiles)
+	profileMap := map[string]client_dto.GetDoctorProfileResponseDto{}
+	for _, profile := range *doctorProfiles {
+		profileMap[profile.ID] = profile
+	}
 	var responses []dto.GetIncomingAppointmentResponse
-	for i, appointment := range *appointments {
-		doctorProfile := (*doctorProfiles)[i]
+	for _, appointment := range *appointments {
+		doctorProfile := profileMap[appointment.DoctorID.String()]
 		responses = append(responses, dto.GetIncomingAppointmentResponse{
 			DoctorID:        appointment.DoctorID.String(),
 			DoctorFirstName: doctorProfile.FirstName,
